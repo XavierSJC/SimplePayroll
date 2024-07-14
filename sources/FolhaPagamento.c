@@ -4,13 +4,15 @@
 
 TypeListEmployee* employees;
 
-void addEmployeeToList(void* employee, EmployeeType type) {
+bool addEmployeeToList(void* employee, EmployeeType type) {
 	if (employees == NULL) {
 		employees = malloc(sizeof(TypeListEmployee));
+		if (employees == NULL)
+			return false;
 		employees->employee = employee;
 		employees->typeEmployee = type;
 		employees->nextEmployee = NULL;
-		return;
+		return true;
 	}
 
 	TypeListEmployee* node = employees;
@@ -19,33 +21,48 @@ void addEmployeeToList(void* employee, EmployeeType type) {
 	}
 	
 	node->nextEmployee = malloc(sizeof(TypeListEmployee));
+	if (node->nextEmployee == NULL)
+		return false;
 	node->nextEmployee->employee = employee;
 	node->nextEmployee->typeEmployee = type;
 	node->nextEmployee->nextEmployee = NULL;
+	return true;
 }
 
-void addCLT(char* name, float salary, int signedContracts, float commisionByContract) {
+bool addCLT(char* name, float salary, int signedContracts, float commisionByContract) {
 	TypeEmployeeCLT* newEmployee = malloc(sizeof(TypeEmployeeCLT));
+	if (newEmployee == NULL)
+		return false;
+
 	newEmployee->employee = createEmployee(name, signedContracts, commisionByContract);
+	if (newEmployee->employee == NULL)
+		return false;
+
 	newEmployee->salary = salary;
 
-	addEmployeeToList(newEmployee, CLT);
+	return addEmployeeToList(newEmployee, CLT);
 }
 
-void addPJ(char* name, float valueByHour, float hoursWorked, int signedContracts, float commisionByContract){
+bool addPJ(char* name, float valueByHour, float hoursWorked, int signedContracts, float commisionByContract){
 	TypeEmployeePJ* newEmployee = malloc(sizeof(TypeEmployeePJ));
+	if (newEmployee == NULL)
+		return false;
+
 	newEmployee->employee = createEmployee(name, signedContracts, commisionByContract);
+	if ((newEmployee->employee) == NULL)
+		return false;
+
 	newEmployee->valueByHour = valueByHour;
 	newEmployee->hoursWorked = hoursWorked;
 
-	addEmployeeToList(newEmployee, PJ);
+	return addEmployeeToList(newEmployee, PJ);
 }
 
 float calculeEmployeeCLT(TypeEmployeeCLT* employee)
 {
 	float sum = 0;
 	sum += employee->salary;
-	sum += calculeTypeEmployee(&employee->employee);
+	sum += calculeTypeEmployee(employee->employee);
 
 	return sum;
 }
@@ -54,7 +71,7 @@ float calculeEmployeePJ(TypeEmployeePJ* employee)
 {
 	float sum = 0;
 	sum += employee->hoursWorked * employee->valueByHour;
-	sum += calculeTypeEmployee(&employee->employee);
+	sum += calculeTypeEmployee(employee->employee);
 
 	return sum;
 }
@@ -87,6 +104,8 @@ float calculeEmployee(TypeListEmployee* node)
 		TypeEmployeePJ* emp = (TypeEmployeePJ*)node->employee;
 		return calculeEmployeePJ(emp);
 	}
+
+	return 0.f;
 }
 
 char* getEmployeerName(TypeListEmployee* node)
@@ -97,15 +116,26 @@ char* getEmployeerName(TypeListEmployee* node)
 
 	if (node->typeEmployee == CLT) {
 		TypeEmployeeCLT* emp = (TypeEmployeeCLT*)node->employee;
-		return emp->employee.name;
+		return emp->employee->name;
 	}
 
 	if (node->typeEmployee == PJ) {
 		TypeEmployeePJ* emp = (TypeEmployeePJ*)node->employee;
-		return emp->employee.name;
+		return emp->employee->name;
 	}
 
 	return NULL;
+}
+
+void freeEmployees()
+{
+	TypeListEmployee* node = employees;
+	while (node != NULL) {
+		TypeListEmployee* tmpNode = node->nextEmployee;
+		free(node->employee);
+		free(node);
+		node = tmpNode;
+	}
 }
 
 float calculeTypeEmployee(TypeEmployee* employee)
@@ -113,13 +143,15 @@ float calculeTypeEmployee(TypeEmployee* employee)
 	return employee->commisionByContract * employee->signedContracts;
 }
 
-TypeEmployee createEmployee(char* name, int signedContracts, float commisionByContract)
+TypeEmployee* createEmployee(char* name, int signedContracts, float commisionByContract)
 {
 	TypeEmployee* employee = malloc(sizeof(TypeEmployee));
+	if (employee == NULL)
+		return NULL;
 	employee->name = name;
 	employee->signedContracts = signedContracts;
 	employee->commisionByContract = commisionByContract;
-	return *employee;
+	return employee;
 }
 
 float calculeMonth()
